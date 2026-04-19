@@ -4,9 +4,10 @@
  * Synchronized with Alex's VolvoHomepage Content Fragment Model
  */
 
+// Support both AEM_GRAPHQL_ENDPOINT (from Vercel config) and AEM_PUBLISH_ENDPOINT (from .env files)
 const AEM_ENDPOINT = process.env.AEM_ENDPOINT || '';
 const AEM_TOKEN = process.env.AEM_TOKEN || '';
-const AEM_PUBLISH_ENDPOINT = process.env.AEM_PUBLISH_ENDPOINT || '';
+const AEM_PUBLISH_ENDPOINT = process.env.AEM_PUBLISH_ENDPOINT || process.env.AEM_GRAPHQL_ENDPOINT || '';
 
 /**
  * Type definitions for expected AEM Content Fragment fields
@@ -72,7 +73,7 @@ export interface VolvoHomepageContent {
  */
 export async function getContentFragment(fragmentPath: string): Promise<any> {
   if (!AEM_ENDPOINT && !AEM_PUBLISH_ENDPOINT) {
-    console.error('AEM_ENDPOINT or AEM_PUBLISH_ENDPOINT not configured');
+    console.error('AEM_ENDPOINT, AEM_PUBLISH_ENDPOINT, or AEM_GRAPHQL_ENDPOINT not configured');
     throw new Error('AEM endpoint not configured');
   }
 
@@ -159,7 +160,7 @@ export async function getContentFragment(fragmentPath: string): Promise<any> {
  */
 export async function getContentFragments(fragmentType: string): Promise<any[]> {
   if (!AEM_ENDPOINT && !AEM_PUBLISH_ENDPOINT) {
-    console.error('AEM_ENDPOINT or AEM_PUBLISH_ENDPOINT not configured');
+    console.error('AEM_ENDPOINT, AEM_PUBLISH_ENDPOINT, or AEM_GRAPHQL_ENDPOINT not configured');
     throw new Error('AEM endpoint not configured');
   }
 
