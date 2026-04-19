@@ -1,6 +1,7 @@
 /**
  * AEM Content Fragment API Client
  * Handles fetching content fragments from Adobe Experience Manager
+ * Synchronized with Alex's VolvoHomepage Content Fragment Model
  */
 
 const AEM_ENDPOINT = process.env.AEM_ENDPOINT || '';
@@ -83,12 +84,6 @@ export async function getContentFragment(fragmentPath: string): Promise<any> {
         item {
           __typename
           _path
-          _metadata {
-            stringMetadata {
-              name
-              value
-            }
-          }
           ... on VolvoHomepage {
             heroHeadline: headline
             heroSubheadline: subheadline
@@ -96,26 +91,23 @@ export async function getContentFragment(fragmentPath: string): Promise<any> {
             heroCtaUrl: ctaUrl
             heroBackgroundImage: backgroundImageUrl
             navLogo: logo
-            navLinksTitle: linksTitle
             navLinks: navigationLinks {
               linkLabel: label
               linkUrl: url
             }
-            carModelsTitle: modelsTitle
             carModelsList: models {
               modelName: name
               modelTagline: tagline
               modelImage: imageUrl
               modelCta: ctaLink
             }
-            featuresHeadline: headline
+            featureHeadline: headline
             featuresList: featureItems {
               featureTitle: title
               featureDesc: description
               featureIcon: iconUrl
             }
             footerCopyright: copyrightText
-            footerLinksTitle: linksTitle
             footerLinksList: footerLinks {
               linkLabel: label
               linkUrl: url
@@ -179,12 +171,6 @@ export async function getContentFragments(fragmentType: string): Promise<any[]> 
         items {
           __typename
           _path
-          _metadata {
-            stringMetadata {
-              name
-              value
-            }
-          }
         }
       }
     }
@@ -226,6 +212,7 @@ export async function getContentFragments(fragmentType: string): Promise<any[]> 
 
 /**
  * Transform raw AEM response to typed content structure
+ * Maps GraphQL field aliases to component props
  */
 export function transformAEMContent(aemData: any): VolvoHomepageContent {
   return {
@@ -237,17 +224,32 @@ export function transformAEMContent(aemData: any): VolvoHomepageContent {
       backgroundImageUrl: aemData.heroBackgroundImage || '/images/hero-bg.jpg',
     },
     navigation: {
-      logo: aemData.navLogo || '/logo.svg',
-      links: aemData.navLinks || [],
+      logo: aemData.navLogo || '',
+      links: (aemData.navLinks || []).map((link: any) => ({
+        label: link.linkLabel || link.label || '',
+        url: link.linkUrl || link.url || '',
+      })),
     },
-    carModels: aemData.carModelsList || [],
+    carModels: (aemData.carModelsList || []).map((model: any) => ({
+      name: model.modelName || model.name || '',
+      tagline: model.modelTagline || model.tagline || '',
+      imageUrl: model.modelImage || model.imageUrl || '',
+      ctaLink: model.modelCta || model.ctaLink || '',
+    })),
     features: {
-      headline: aemData.featuresHeadline || 'Why Choose Volvo',
-      features: aemData.featuresList || [],
+      headline: aemData.featureHeadline || 'Why Choose Volvo',
+      features: (aemData.featuresList || []).map((feature: any) => ({
+        title: feature.featureTitle || feature.title || '',
+        description: feature.featureDesc || feature.description || '',
+        iconUrl: feature.featureIcon || feature.iconUrl || '',
+      })),
     },
     footer: {
       copyrightText: aemData.footerCopyright || '© 2024 Volvo Cars',
-      links: aemData.footerLinksList || [],
+      links: (aemData.footerLinksList || []).map((link: any) => ({
+        label: link.linkLabel || link.label || '',
+        url: link.linkUrl || link.url || '',
+      })),
     },
   };
 }
