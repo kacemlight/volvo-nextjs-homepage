@@ -69,12 +69,16 @@ export interface VolvoHomepageContent {
 /**
  * Fetch content fragment from AEM using GraphQL
  * @param fragmentPath - Path to the content fragment in AEM DAM
- * @returns Promise with the content fragment data
+ * @returns Promise with the content fragment data, or null if fetch fails
+ * 
+ * IMPORTANT: This function returns null on error rather than throwing.
+ * This allows server components to gracefully fall back to default content
+ * when AEM is unavailable (e.g., during Vercel build).
  */
 export async function getContentFragment(fragmentPath: string): Promise<any> {
   if (!AEM_ENDPOINT && !AEM_PUBLISH_ENDPOINT) {
-    console.error('AEM_ENDPOINT, AEM_PUBLISH_ENDPOINT, or AEM_GRAPHQL_ENDPOINT not configured');
-    throw new Error('AEM endpoint not configured');
+    console.warn('AEM_ENDPOINT, AEM_PUBLISH_ENDPOINT, or AEM_GRAPHQL_ENDPOINT not configured');
+    return null;
   }
 
   const endpoint = AEM_PUBLISH_ENDPOINT || AEM_ENDPOINT;
@@ -136,32 +140,35 @@ export async function getContentFragment(fragmentPath: string): Promise<any> {
     });
 
     if (!response.ok) {
-      throw new Error(`AEM API returned ${response.status}: ${response.statusText}`);
+      console.error(`AEM API returned ${response.status}: ${response.statusText}`);
+      return null;
     }
 
     const data = await response.json();
 
     if (data.errors) {
       console.error('GraphQL Errors:', data.errors);
-      throw new Error(`GraphQL Error: ${data.errors[0].message}`);
+      return null;
     }
 
     return data.data?.contentFragmentByPath?.item || null;
   } catch (error) {
     console.error('Failed to fetch content fragment:', error);
-    throw error;
+    return null;
   }
 }
 
 /**
  * Fetch multiple content fragments with filtering
  * @param fragmentType - Type of content fragment to fetch
- * @returns Promise with array of content fragments
+ * @returns Promise with array of content fragments, or empty array if fetch fails
+ * 
+ * IMPORTANT: This function returns empty array on error rather than throwing.
  */
 export async function getContentFragments(fragmentType: string): Promise<any[]> {
   if (!AEM_ENDPOINT && !AEM_PUBLISH_ENDPOINT) {
-    console.error('AEM_ENDPOINT, AEM_PUBLISH_ENDPOINT, or AEM_GRAPHQL_ENDPOINT not configured');
-    throw new Error('AEM endpoint not configured');
+    console.warn('AEM_ENDPOINT, AEM_PUBLISH_ENDPOINT, or AEM_GRAPHQL_ENDPOINT not configured');
+    return [];
   }
 
   const endpoint = AEM_PUBLISH_ENDPOINT || AEM_ENDPOINT;
@@ -194,20 +201,21 @@ export async function getContentFragments(fragmentType: string): Promise<any[]> 
     });
 
     if (!response.ok) {
-      throw new Error(`AEM API returned ${response.status}: ${response.statusText}`);
+      console.error(`AEM API returned ${response.status}: ${response.statusText}`);
+      return [];
     }
 
     const data = await response.json();
 
     if (data.errors) {
       console.error('GraphQL Errors:', data.errors);
-      throw new Error(`GraphQL Error: ${data.errors[0].message}`);
+      return [];
     }
 
     return data.data?.contentFragmentList?.items || [];
   } catch (error) {
     console.error('Failed to fetch content fragments:', error);
-    throw error;
+    return [];
   }
 }
 
