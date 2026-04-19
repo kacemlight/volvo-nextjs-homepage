@@ -6,8 +6,15 @@ import Footer from '@/components/Footer';
 import { getContentFragment, transformAEMContent, VolvoHomepageContent } from '@/lib/aem';
 
 /**
- * Fetch AEM content at build time (ISR compatible)
- * Falls back to default content if AEM is unavailable
+ * CRITICAL: Force dynamic rendering to prevent static generation at build time.
+ * This ensures getContentFragment() only runs on demand, not during 'next build'.
+ * AEM API may not be reachable during Vercel's build phase, so we must render on-demand.
+ */
+export const dynamic = 'force-dynamic';
+
+/**
+ * Fetch AEM content at request time, with fallback to default content
+ * Gracefully handles AEM API unavailability
  */
 async function getPageContent(): Promise<VolvoHomepageContent> {
   const defaultContent: VolvoHomepageContent = {
